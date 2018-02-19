@@ -19,6 +19,10 @@ func populateData() {
 			"cpe:2.3:o:cisco:Adaptive Security Appliance Software:9.1.7.22:*:*:*:*:*:*:*",
 			"cpe:2.3:h:cisco:Adaptive Security Appliance 5525-X:*:*:*:*:*:*:*:*",
 		},
+		features: []string{
+			"snmp",
+			"webvpn",
+		},
 	}
 
 	devices = append(devices, temp_device)
@@ -32,6 +36,7 @@ func populateData() {
 			"cpe:2.3:o:cisco:Adaptive Security Appliance Software:8.2.1:*:*:*:*:*:*:*",
 			"cpe:2.3:h:cisco:Adaptive Security Appliance 5510:*:*:*:*:*:*:*:*",
 		},
+		features: []string{"snmp"},
 	}
 
 	devices = append(devices, temp_device)
@@ -45,6 +50,7 @@ func populateData() {
 			"cpe:2.3:o:f5:Local Traffic Monitor:11.1:*:*:*:*:*:*:*",
 			"cpe:2.3:h:f5:1400 Series Appliance:*:*:*:*:*:*:*:*",
 		},
+		features: []string{"dns", "vrrp"},
 	}
 
 	devices = append(devices, temp_device)
@@ -57,6 +63,7 @@ func populateData() {
 		},
 		title:    "Cisco Adaptive Security Appliance Remote Code Execution and Denial of Service Vulnerability",
 		severity: "Critical",
+		feature:  "webvpn",
 		cpes: []string{
 			"cpe:2.3:o:cisco:Adaptive Security Appliance Software:8.2.1:*:*:*:*:*:*:*",
 			"cpe:2.3:o:cisco:Adaptive Security Appliance Software:8.2.2:*:*:*:*:*:*:*",
@@ -102,7 +109,7 @@ func main() {
 
 	var cve_ref string
 
-	fmt.Print("Enter a CVE reference: ")
+	fmt.Print("Enter a CVE reference (Hint: CVE-2018-0101): ")
 	fmt.Scanln(&cve_ref)
 
 	var found_cve cve
@@ -131,7 +138,6 @@ func main() {
 	for di, device := range devices {
 		for _, cpe := range device.cpes {
 			for _, affected_cpe := range found_cve.cpes {
-				// fmt.Println(affected_cpe, cpe)
 				if affected_cpe == cpe {
 					affected_devices = append(affected_devices, di)
 				}
@@ -145,5 +151,29 @@ func main() {
 		fmt.Println(devices[di].hostname)
 	}
 
-	fmt.Println("\nDevices may only be vulnerable if they are running affected features.\nExamine configuration to be sure")
+	fmt.Println("\nChecking which devices are running vulnerable features...")
+
+	var vulnerable_devices []int
+
+	for di := range affected_devices {
+		for _, feature := range devices[di].features {
+			if feature == found_cve.feature {
+				vulnerable_devices = append(vulnerable_devices, di)
+			}
+		}
+	}
+
+	if len(vulnerable_devices) == 0 {
+		fmt.Println("\nNo devices were found running vulnerable features")
+	} else {
+		fmt.Printf("\nThere are %d device(s) which are running vulnerable features, list below:\n", len(vulnerable_devices))
+
+		fmt.Printf("%-30s %-15s %-20s\n", "HOSTNAME", "S/W VERSION", "HARDWARE PLATFORM")
+		fmt.Printf("%-30s %-15s %-20s\n", "--------", "-----------", "-----------------")
+		for di := range vulnerable_devices {
+			vd := devices[di] // A single vulnerable device (vd)
+			fmt.Printf("%-30s %-15s %-20s", vd.hostname, vd.software_ver, vd.hw_model)
+		}
+	}
+
 }

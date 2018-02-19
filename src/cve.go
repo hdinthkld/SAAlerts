@@ -6,4 +6,5 @@ type cve struct {
 	title       string
 	severity    string
 	cpes        []string
+	feature     string
 }

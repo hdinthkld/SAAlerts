@@ -9,3 +9,12 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Package Directory
+pkg
+
+# IDE Files
+.vscode
+
+# Documentation Folder
+docs
